@@ -56,10 +56,9 @@ function errorStock(symbol: string, msg: string): StockData {
 
 export async function fetchStock(symbol: string): Promise<StockData> {
   try {
-    const [chart, liveQuote] = await Promise.all([
-      yfChart(symbol),
-      yfQuote(symbol).catch(() => null),
-    ]);
+    // Sequential to avoid hammering Yahoo Finance with concurrent requests
+    const chart = await yfChart(symbol);
+    const liveQuote = await yfQuote(symbol).catch(() => null);
 
     const rawQuotes = chart.quotes;
     if (rawQuotes.length === 0) return errorStock(symbol, 'No historical data');
@@ -197,7 +196,7 @@ export async function fetchAllStocks(symbols: string[]): Promise<StockData[]> {
   const results: StockData[] = [];
   for (let i = 0; i < symbols.length; i++) {
     results.push(await fetchStock(symbols[i]!));
-    if (i < symbols.length - 1) await new Promise(r => setTimeout(r, 300));
+    if (i < symbols.length - 1) await new Promise(r => setTimeout(r, 600));
   }
   return results;
 }

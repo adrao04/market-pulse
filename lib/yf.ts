@@ -27,26 +27,27 @@ let _crumbCache: CrumbCache | null = null;
 async function getCrumb(): Promise<CrumbCache> {
   if (_crumbCache && Date.now() < _crumbCache.expiresAt) return _crumbCache;
 
-  // Step 1 — get a Yahoo session cookie
-  const cookieRes = await fetch(
+  // Try cookie sources in order until we get a non-empty cookie
+  let cookie = '';
+  for (const url of [
     'https://fc.yahoo.com/v2/reader?brand=fp&locale=en-US&region=US&site=finance',
-    { headers: BASE_HEADERS }
-  );
-  const rawCookie = cookieRes.headers.get('set-cookie') ?? '';
-  // Keep just the first name=value pair
-  const cookie = rawCookie.split(';')[0] ?? '';
+    'https://finance.yahoo.com/',
+  ]) {
+    try {
+      const res = await fetch(url, { headers: BASE_HEADERS });
+      const raw = res.headers.get('set-cookie') ?? '';
+      if (raw) { cookie = raw.split(';')[0] ?? ''; break; }
+    } catch { /* try next */ }
+  }
 
-  // Step 2 — exchange cookie for a crumb
   const crumbRes = await fetch(`${Q1}/v1/test/getcrumb`, {
     headers: { ...BASE_HEADERS, Cookie: cookie },
   });
+  if (!crumbRes.ok) throw new Error(`Crumb fetch failed: ${crumbRes.status}`);
   const crumb = (await crumbRes.text()).trim();
+  if (!crumb) throw new Error('Empty crumb returned by Yahoo Finance');
 
-  _crumbCache = {
-    crumb,
-    cookie,
-    expiresAt: Date.now() + 20 * 60 * 1000, // 20-minute TTL
-  };
+  _crumbCache = { crumb, cookie, expiresAt: Date.now() + 20 * 60 * 1000 };
   return _crumbCache;
 }
 
@@ -77,48 +78,55 @@ export type YFSummaryResult = Record<string, unknown>;
 // ─── API methods ───────────────────────────────────────────────
 
 export async function yfChart(symbol: string): Promise<YFChartResult> {
-  const { crumb, cookie } = await getCrumb();
-  const url = `${Q1}/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1y&events=history&includePrePost=false&crumb=${encodeURIComponent(crumb)}`;
-  const res = await fetch(url, { headers: { ...BASE_HEADERS, Cookie: cookie } });
-  if (!res.ok) throw new Error(`Chart fetch failed: ${res.status}`);
-  const json = (await res.json()) as {
-    chart?: {
-      result?: Array<{
-        meta?: { regularMarketPrice?: number };
-        timestamp?: number[];
-        indicators?: {
-          quote?: Array<{
-            open?: (number | null)[];
-            high?: (number | null)[];
-            low?: (number | null)[];
-            close?: (number | null)[];
-            volume?: (number | null)[];
-          }>;
-        };
-      }>;
-      error?: { description?: string };
+  let lastStatus = 0;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, 1000 * attempt));
+    const { crumb, cookie } = await getCrumb();
+    const url = `${Q1}/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1y&events=history&includePrePost=false&crumb=${encodeURIComponent(crumb)}`;
+    const res = await fetch(url, { headers: { ...BASE_HEADERS, Cookie: cookie } });
+    if (res.status === 429) { _crumbCache = null; lastStatus = 429; continue; }
+    if (!res.ok) throw new Error(`Chart fetch failed: ${res.status}`);
+
+    const json = (await res.json()) as {
+      chart?: {
+        result?: Array<{
+          meta?: { regularMarketPrice?: number };
+          timestamp?: number[];
+          indicators?: {
+            quote?: Array<{
+              open?: (number | null)[];
+              high?: (number | null)[];
+              low?: (number | null)[];
+              close?: (number | null)[];
+              volume?: (number | null)[];
+            }>;
+          };
+        }>;
+        error?: { description?: string };
+      };
     };
-  };
 
-  if (json.chart?.error) throw new Error(json.chart.error.description ?? 'Chart error');
-  const result = json.chart?.result?.[0];
-  if (!result) throw new Error('No chart data');
+    if (json.chart?.error) throw new Error(json.chart.error.description ?? 'Chart error');
+    const result = json.chart?.result?.[0];
+    if (!result) throw new Error('No chart data');
 
-  const ts = result.timestamp ?? [];
-  const q = result.indicators?.quote?.[0] ?? {};
-  const quotes: YFChartQuote[] = ts.map((t, i) => ({
-    date: new Date(t * 1000),
-    open: q.open?.[i] ?? null,
-    high: q.high?.[i] ?? null,
-    low: q.low?.[i] ?? null,
-    close: q.close?.[i] ?? null,
-    volume: q.volume?.[i] ?? null,
-  }));
+    const ts = result.timestamp ?? [];
+    const q = result.indicators?.quote?.[0] ?? {};
+    const quotes: YFChartQuote[] = ts.map((t, i) => ({
+      date: new Date(t * 1000),
+      open: q.open?.[i] ?? null,
+      high: q.high?.[i] ?? null,
+      low: q.low?.[i] ?? null,
+      close: q.close?.[i] ?? null,
+      volume: q.volume?.[i] ?? null,
+    }));
 
-  return {
-    regularMarketPrice: result.meta?.regularMarketPrice ?? null,
-    quotes,
-  };
+    return {
+      regularMarketPrice: result.meta?.regularMarketPrice ?? null,
+      quotes,
+    };
+  }
+  throw new Error(`Chart fetch failed: 429 after retries`);
 }
 
 export async function yfQuote(symbol: string): Promise<YFQuote | null> {
