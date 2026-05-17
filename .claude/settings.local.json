@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/usr/local/bin/npm install *)",
+      "Read(//usr/local/bin/**)",
+      "Read(//Users/ak-mac/.nvm/versions/node/**)",
+      "Bash(~/.nvm/versions/node/v25.9.0/bin/npm install *)",
+      "Bash(~/.nvm/versions/node/v25.9.0/bin/node ~/.nvm/versions/node/v25.9.0/bin/npm install)",
+      "Bash(export PATH=\"$HOME/.nvm/versions/node/v25.9.0/bin:$PATH\")",
+      "Bash(npm install *)",
+      "Bash(npm uninstall *)",
+      "Bash(npx next *)"
+    ]
+  }
+}

@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Market Pulse</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Cabinet+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:      #080b0f;
+  --s1:      #0f1318;
+  --s2:      #161b22;
+  --s3:      #1e242e;
+  --border:  rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.11);
+  --text:    #dde3ec;
+  --muted:   #4e5a6a;
+  --muted2:  #7a8898;
+  --green:   #1fd67c;
+  --red:     #ff4757;
+  --amber:   #ffb224;
+  --blue:    #4da6ff;
+  --purple:  #9b8dff;
+  --teal:    #30d5c8;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Cabinet Grotesk',sans-serif;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.04) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
+
+.wrap{position:relative;z-index:1;max-width:1160px;margin:0 auto;padding:28px 20px 60px}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:12px}
+.logo{display:flex;flex-direction:column;gap:2px}
+.logo-name{font-size:22px;font-weight:800;letter-spacing:-.5px;background:linear-gradient(100deg,#1fd67c,#4da6ff 60%,#9b8dff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase}
+.header-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+.mkt-pill{display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:100px;border:1px solid var(--border2);background:var(--s1);font-family:'DM Mono',monospace;font-size:11px;color:var(--muted2);transition:all .3s}
+.mkt-pill.open{border-color:rgba(31,214,124,.35);background:rgba(31,214,124,.07);color:var(--green)}
+.mkt-pill.closed{border-color:rgba(255,71,87,.3);background:rgba(255,71,87,.06);color:var(--red)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:all .3s}
+.mkt-pill.open .dot{background:var(--green);box-shadow:0 0 7px var(--green);animation:blink 2s infinite}
+.mkt-pill.closed .dot{background:var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+.btn{padding:8px 16px;border-radius:8px;border:1px solid var(--border2);background:var(--s2);color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn:hover{background:var(--s3);border-color:var(--border2)}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:rgba(77,166,255,.12);border-color:rgba(77,166,255,.3);color:var(--blue)}
+.btn-primary:hover{background:rgba(77,166,255,.2);border-color:var(--blue)}
+
+/* PANELS */
+.panel{background:var(--s1);border:1px solid var(--border2);border-radius:14px;padding:18px 22px;margin-bottom:20px}
+.panel-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.panel-row input{flex:1;min-width:160px;padding:10px 14px;background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;outline:none;transition:border-color .2s}
+.panel-row input::placeholder{color:var(--muted)}
+.panel-row input:focus{border-color:var(--blue)}
+#addInput{text-transform:uppercase}
+#addInput::placeholder{text-transform:none}
+.recipients-input:focus{border-color:var(--teal)!important}
+.lbl{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+.err-msg{font-family:'DM Mono',monospace;font-size:11px;color:var(--red);display:none}
+
+/* EMAIL CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:100px;background:rgba(48,213,200,.08);border:1px solid rgba(48,213,200,.3);font-family:'DM Mono',monospace;font-size:12px;color:var(--teal);animation:rise .3s ease}
+.chip-x{width:15px;height:15px;border-radius:50%;border:1px solid rgba(48,213,200,.4);background:transparent;color:var(--teal);cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;transition:all .2s;line-height:1;flex-shrink:0}
+.chip-x:hover{background:rgba(255,71,87,.15);border-color:var(--red);color:var(--red)}
+.no-chips{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);font-style:italic}
+
+/* SUMMARY */
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:24px}
+.stat{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px;transition:border-color .2s}
+.stat:hover{border-color:var(--border2)}
+.stat-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px}
+.stat-val{font-size:24px;font-weight:800}
+.g{color:var(--green)}.r{color:var(--red)}.a{color:var(--amber)}.b{color:var(--blue)}.p{color:var(--purple)}
+
+/* FILTERS */
+.filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.fbtn{padding:6px 14px;border-radius:100px;border:1px solid var(--border2);background:transparent;color:var(--muted2);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .2s;letter-spacing:.5px}
+.fbtn.active{background:var(--s2);color:var(--text);border-color:var(--border2)}
+.fbtn.active.buy{color:var(--green);border-color:rgba(31,214,124,.4)}
+.fbtn.active.sell{color:var(--red);border-color:rgba(255,71,87,.4)}
+
+.ts{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:16px}
+
+/* STOCK GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+
+/* CARD */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s;animation:rise .4s ease;cursor:pointer}
+.card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--border2);transition:background .3s}
+.card.up::before{background:linear-gradient(90deg,var(--green),transparent)}
+.card.down::before{background:linear-gradient(90deg,var(--red),transparent)}
+.card.has-buy::before{background:linear-gradient(90deg,var(--amber),var(--green),transparent)}
+.card.has-sell::before{background:linear-gradient(90deg,var(--red),var(--amber),transparent)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.sym{font-size:18px;font-weight:800;letter-spacing:-.3px}
+.card-tags{display:flex;gap:5px;align-items:center}
+.tag{font-family:'DM Mono',monospace;font-size:9px;padding:3px 8px;border-radius:100px;border:1px solid;letter-spacing:.5px}
+.tag-buy{color:var(--amber);border-color:rgba(255,178,36,.45);background:rgba(255,178,36,.08)}
+.tag-sell{color:var(--red);border-color:rgba(255,71,87,.4);background:rgba(255,71,87,.07)}
+.remove-btn{width:22px;height:22px;border-radius:50%;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.remove-btn:hover{border-color:var(--red);color:var(--red);background:rgba(255,71,87,.1)}
+
+.price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:3px}
+.price{font-size:26px;font-weight:800;letter-spacing:-1px}
+.chg{font-family:'DM Mono',monospace;font-size:12px;padding:2px 7px;border-radius:6px}
+.chg.pos{color:var(--green);background:rgba(31,214,124,.1)}
+.chg.neg{color:var(--red);background:rgba(255,71,87,.1)}
+.sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:2px}
+
+.meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 10px;margin:14px 0;padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.mi{display:flex;flex-direction:column;gap:2px}
+.mk{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.mv{font-family:'DM Mono',monospace;font-size:12px;font-weight:500}
+.mv.warn{color:var(--amber)}.mv.danger{color:var(--red)}.mv.ok{color:var(--green)}
+.rsi-track{height:2px;background:var(--border2);border-radius:2px;margin-top:3px}
+.rsi-fill{height:2px;border-radius:2px;transition:width .6s ease}
+.macd-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:middle}
+
+.signals-wrap{display:flex;flex-direction:column;gap:6px}
+.sig-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px}
+.sig-row{display:flex;gap:5px;flex-wrap:wrap}
+.pill{font-family:'DM Mono',monospace;font-size:9px;padding:3px 9px;border-radius:100px;border:1px solid;letter-spacing:.3px}
+.pill-buy{color:var(--green);border-color:rgba(31,214,124,.35);background:rgba(31,214,124,.07)}
+.pill-sell{color:var(--red);border-color:rgba(255,71,87,.3);background:rgba(255,71,87,.06)}
+.pill-rsi{color:var(--amber);border-color:rgba(255,178,36,.35);background:rgba(255,178,36,.07)}
+.pill-vol{color:var(--purple);border-color:rgba(155,141,255,.3);background:rgba(155,141,255,.07)}
+.pill-bb{color:var(--teal);border-color:rgba(48,213,200,.3);background:rgba(48,213,200,.07)}
+.pill-ma{color:var(--blue);border-color:rgba(77,166,255,.3);background:rgba(77,166,255,.07)}
+
+.hint{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:10px;letter-spacing:.5px;text-align:right}
+
+.empty{text-align:center;padding:70px 20px;color:var(--muted);border:1px dashed var(--border2);border-radius:14px;grid-column:1/-1}
+.empty h3{font-size:17px;color:var(--text);margin-bottom:8px}
+.empty p{font-size:13px;line-height:1.7}
+.err-card{border-color:rgba(255,71,87,.25)!important;background:rgba(255,71,87,.04)!important}
+
+/* SPINNER */
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(77,166,255,.25);border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite}
+.spin-teal{display:inline-block;width:16px;height:16px;border:2px solid rgba(48,213,200,.25);border-top-color:var(--teal);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── DETAIL MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;backdrop-filter:blur(4px);animation:fadein .2s ease}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.modal{background:var(--s1);border:1px solid var(--border2);border-radius:18px;width:100%;max-width:900px;overflow:hidden;animation:slideup .25s ease}
+@keyframes slideup{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+.modal-header{padding:24px 28px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.modal-title{display:flex;flex-direction:column;gap:4px}
+.modal-sym{font-size:28px;font-weight:800;letter-spacing:-1px}
+.modal-name{font-size:13px;color:var(--muted2);font-weight:400}
+.modal-sector{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.badge{font-family:'DM Mono',monospace;font-size:10px;padding:3px 10px;border-radius:100px;background:var(--s2);border:1px solid var(--border2);color:var(--muted2)}
+.modal-close{width:32px;height:32px;border-radius:50%;border:1px solid var(--border2);background:transparent;color:var(--muted2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.modal-close:hover{border-color:var(--red);color:var(--red);background:rgba(255,71,87,.1)}
+
+.modal-price-bar{display:flex;align-items:center;gap:16px;padding:16px 28px;background:var(--s2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.modal-price{font-size:32px;font-weight:800;letter-spacing:-1.5px}
+.modal-body{padding:24px 28px;display:flex;flex-direction:column;gap:28px}
+
+/* Section header */
+.sec-hdr{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sec-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* Analyst consensus */
+.consensus-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.con-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.con-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.con-val{font-size:20px;font-weight:800}
+.con-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2)}
+
+/* Rec pill */
+.rec-pill{display:inline-flex;align-items:center;padding:6px 16px;border-radius:100px;font-weight:700;font-size:13px;letter-spacing:.5px}
+.rec-strong-buy{background:rgba(31,214,124,.15);color:var(--green);border:1px solid rgba(31,214,124,.4)}
+.rec-buy{background:rgba(77,166,255,.12);color:var(--blue);border:1px solid rgba(77,166,255,.35)}
+.rec-hold{background:rgba(255,178,36,.1);color:var(--amber);border:1px solid rgba(255,178,36,.35)}
+.rec-sell{background:rgba(255,71,87,.1);color:var(--red);border:1px solid rgba(255,71,87,.35)}
+.rec-underperform{background:rgba(155,141,255,.1);color:var(--purple);border:1px solid rgba(155,141,255,.3)}
+
+/* Target bar */
+.target-bar-wrap{margin-top:12px}
+.target-bar-track{height:8px;background:var(--s3);border-radius:4px;position:relative;margin:8px 0}
+.target-bar-range{position:absolute;height:100%;background:rgba(77,166,255,.3);border-radius:4px}
+.target-bar-cur{position:absolute;width:3px;height:14px;background:var(--text);border-radius:2px;top:-3px;transform:translateX(-50%)}
+.target-labels{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)}
+
+/* Upgrades table */
+.upgrade-table{width:100%;border-collapse:collapse;font-size:13px}
+.upgrade-table th{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.upgrade-table td{padding:9px 10px;border-bottom:1px solid var(--border);color:var(--text)}
+.upgrade-table tr:last-child td{border-bottom:none}
+.upgrade-table tr:hover td{background:rgba(255,255,255,.02)}
+.grade-up{color:var(--green)}.grade-down{color:var(--red)}.grade-init{color:var(--blue)}.grade-maint{color:var(--muted2)}
+
+/* Earnings table */
+.earnings-table{width:100%;border-collapse:collapse;font-size:13px}
+.earnings-table th{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.earnings-table td{padding:9px 10px;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-size:12px}
+.earnings-table tr:last-child td{border-bottom:none}
+.beat{color:var(--green)}.miss{color:var(--red)}.inline{color:var(--amber)}
+
+/* Fundamentals grid */
+.fund-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.fund-item{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:3px}
+.fund-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+.fund-val{font-family:'DM Mono',monospace;font-size:14px;font-weight:500}
+
+/* Description */
+.desc{font-size:13px;line-height:1.75;color:var(--muted2);max-height:120px;overflow:hidden;position:relative}
+.desc.expanded{max-height:none}
+.desc-fade{position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(transparent,var(--s1));pointer-events:none}
+.read-more{font-family:'DM Mono',monospace;font-size:11px;color:var(--blue);cursor:pointer;border:none;background:none;padding:4px 0;margin-top:4px}
+
+/* Loading state inside modal */
+.modal-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 28px;gap:16px;color:var(--muted2);font-family:'DM Mono',monospace;font-size:13px}
+
+footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+footer span{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)}
+
+/* ── TOOLTIPS ── */
+.tt{
+  border-bottom:1px dashed var(--muted);
+  cursor:help;
+  transition:border-color .15s;
+}
+.tt:hover{border-color:var(--blue)}
+
+#tooltip{
+  position:fixed;
+  z-index:9999;
+  pointer-events:none;
+  max-width:260px;
+  background:#1a2130;
+  border:1px solid rgba(77,166,255,.35);
+  border-radius:10px;
+  padding:10px 14px;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);
+  opacity:0;
+  transform:translateY(4px);
+  transition:opacity .15s ease, transform .15s ease;
+}
+#tooltip.visible{
+  opacity:1;
+  transform:translateY(0);
+}
+.tt-term{
+  font-family:'Cabinet Grotesk',sans-serif;
+  font-size:12px;
+  font-weight:700;
+  color:var(--blue);
+  margin-bottom:5px;
+  letter-spacing:.3px;
+}
+.tt-def{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:var(--muted2);
+  line-height:1.6;
+}
+.tt-signal{
+  margin-top:6px;
+  padding-top:6px;
+  border-top:1px solid rgba(255,255,255,.07);
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  color:var(--muted);
+  line-height:1.5;
+}
+
+@media(max-width:500px){.grid{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}.meta{grid-template-columns:1fr 1fr}.fund-grid{grid-template-columns:1fr 1fr}.modal-body{padding:16px}.modal-header{padding:16px}}
+</style>
+</head>
+<body>
+<!-- Global tooltip -->
+<div id="tooltip"><div class="tt-term" id="tt-term"></div><div class="tt-def" id="tt-def"></div><div class="tt-signal" id="tt-signal"></div></div>
+
+<div class="wrap">
+
+<header>
+  <div class="logo">
+    <div class="logo-name">Market Pulse</div>
+    <div class="logo-sub">Live stock tracker + alerts</div>
+  </div>
+  <div class="header-controls">
+    <div class="mkt-pill" id="mktPill"><span class="dot"></span><span id="mktTxt">Checking…</span></div>
+    <button class="btn btn-primary" id="pollBtn" onclick="manualPoll()">↻ Refresh</button>
+  </div>
+</header>
+
+<!-- Add Stock -->
+<div class="panel">
+  <div class="panel-row">
+    <span class="lbl">Add stock</span>
+    <input id="addInput" placeholder="e.g. AMD" maxlength="10" oninput="this.value=this.value.toUpperCase();hideErr('addError')" onkeydown="if(event.key==='Enter')addStock()"/>
+    <button class="btn btn-primary" onclick="addStock()" id="addBtn">+ Add</button>
+    <span class="err-msg" id="addError"></span>
+  </div>
+</div>
+
+<!-- Recipients -->
+<div class="panel">
+  <div class="panel-row">
+    <span class="lbl" style="color:var(--teal)">📧 Alert recipients</span>
+    <input class="recipients-input" id="emailInput" type="email" placeholder="name@example.com" oninput="hideErr('emailError')" onkeydown="if(event.key==='Enter')addRecipient()"/>
+    <button class="btn" style="background:rgba(48,213,200,.1);border-color:rgba(48,213,200,.3);color:var(--teal)" onclick="addRecipient()" id="emailBtn">+ Add email</button>
+    <span class="err-msg" id="emailError"></span>
+  </div>
+  <div class="chips" id="emailChips"><span class="no-chips">No recipients yet</span></div>
+</div>
+
+<!-- Summary -->
+<div class="summary">
+  <div class="stat"><div class="stat-lbl">Tracking</div><div class="stat-val b" id="sTotal">—</div></div>
+  <div class="stat"><div class="stat-lbl">Gainers</div><div class="stat-val g" id="sGain">—</div></div>
+  <div class="stat"><div class="stat-lbl">Losers</div><div class="stat-val r" id="sLose">—</div></div>
+  <div class="stat"><div class="stat-lbl">Buy signals</div><div class="stat-val a" id="sBuy">—</div></div>
+  <div class="stat"><div class="stat-lbl">Sell signals</div><div class="stat-val r" id="sSell">—</div></div>
+</div>
+
+<!-- Filters -->
+<div class="filters">
+  <button class="fbtn active" onclick="setFilter('all',this)">ALL</button>
+  <button class="fbtn buy"    onclick="setFilter('buy',this)">🟢 BUY SIGNALS</button>
+  <button class="fbtn sell"   onclick="setFilter('sell',this)">🔴 SELL SIGNALS</button>
+  <button class="fbtn"        onclick="setFilter('clean',this)">CLEAN</button>
+</div>
+
+<div class="ts" id="ts">Waiting for first poll…</div>
+<div class="grid" id="grid">
+  <div class="empty"><h3>Connecting to backend…</h3><p>Run <code>python tracker.py</code> then open this file.</p></div>
+</div>
+
+<footer>
+  <span>Market Pulse · Not financial advice</span>
+  <span id="clock"></span>
+</footer>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="overlay" id="overlay" style="display:none" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-loading" id="modalLoading">
+      <span class="spin-teal"></span>
+      <span>Loading analyst data…</span>
+    </div>
+    <div id="modalContent" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+let allStocks = [], activeFilter = 'all';
+
+// ── Helpers ──
+const fmt    = (n, d=2) => n != null ? (+n).toFixed(d) : '—';
+const fmtB   = n => n != null ? '$'+fmt(n)+'B' : '—';
+const fmtPct = n => n != null ? fmt(n*100,1)+'%' : '—';
+const fmtVol = n => !n ? '—' : n>=1e6 ? (n/1e6).toFixed(1)+'M' : n>=1e3 ? (n/1e3).toFixed(0)+'K' : n;
+const sign   = n => n >= 0 ? '+' : '';
+const hideErr= id => { document.getElementById(id).style.display='none'; };
+
+function pillClass(sig) {
+  const s = sig.toLowerCase();
+  if (s.includes('rsi'))       return 'pill-rsi';
+  if (s.includes('vol'))       return 'pill-vol';
+  if (s.includes('bollinger')) return 'pill-bb';
+  if (s.includes('200')||s.includes('ma')||s.includes('50')) return 'pill-ma';
+  return '';
+}
+function rsiColor(r) {
+  if (!r) return '';
+  if (r<35||r>70) return 'danger';
+  if (r<45||r>60) return 'warn';
+  return 'ok';
+}
+function rsiBar(r) {
+  if (!r) return '';
+  const pct=Math.min(r,100);
+  const col=r<35||r>70?'var(--red)':r<45||r>60?'var(--amber)':'var(--green)';
+  return `<div class="rsi-track"><div class="rsi-fill" style="width:${pct}%;background:${col}"></div></div>`;
+}
+function macdDot(h) {
+  if (h==null) return '';
+  return `<span class="macd-dot" style="background:${h>=0?'var(--green)':'var(--red)'}"></span>`;
+}
+
+// ── Card ──
+function buildCard(s) {
+  if (s.error) return `
+    <div class="card err-card" onclick="openDetail('${s.symbol}')">
+      <div class="card-head"><span class="sym">${s.symbol}</span>
+        <div class="card-tags"><button class="remove-btn" onclick="event.stopPropagation();removeStock('${s.symbol}')" title="Remove">✕</button></div>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--red);margin-top:8px">⚠ ${s.error}</div>
+    </div>`;
+
+  const up=s.change_pct>=0;
+  const cls=(s.has_buy&&s.has_sell)?'has-buy has-sell':s.has_buy?'has-buy':s.has_sell?'has-sell':up?'up':'down';
+  const tags=[s.has_buy?'<span class="tag tag-buy">BUY</span>':'',s.has_sell?'<span class="tag tag-sell">SELL</span>':''].filter(Boolean).join('');
+  const buyPills=(s.buy_signals||[]).map(sig=>`<span class="pill pill-buy ${pillClass(sig)}">${sig}</span>`).join('');
+  const sellPills=(s.sell_signals||[]).map(sig=>`<span class="pill pill-sell ${pillClass(sig)}">${sig}</span>`).join('');
+  const bbPct=s.bb_upper&&s.bb_lower?Math.round(((s.price-s.bb_lower)/(s.bb_upper-s.bb_lower))*100):null;
+
+  return `
+  <div class="card ${cls}" onclick="openDetail('${s.symbol}')">
+    <div class="card-head">
+      <span class="sym">${s.symbol}</span>
+      <div class="card-tags">${tags}<button class="remove-btn" onclick="event.stopPropagation();removeStock('${s.symbol}')" title="Remove">✕</button></div>
+    </div>
+    <div class="price-row">
+      <span class="price">$${fmt(s.price)}</span>
+      <span class="chg ${up?'pos':'neg'}">${sign(s.change_pct)}${fmt(s.change_pct)}%</span>
+    </div>
+    <div class="sub">${sign(s.change)}$${fmt(Math.abs(s.change))} today &nbsp;·&nbsp; open $${fmt(s.open)} &nbsp;·&nbsp; ${s.updated_at}</div>
+    <div class="meta">
+      <div class="mi"><span class="mk tt" data-tt="rsi">RSI 14</span><span class="mv ${rsiColor(s.rsi)}">${s.rsi??'—'}</span>${rsiBar(s.rsi)}</div>
+      <div class="mi"><span class="mk tt" data-tt="macd">MACD</span><span class="mv">${macdDot(s.macd_hist)}${s.macd_hist!=null?fmt(s.macd_hist,3):'—'}</span></div>
+      <div class="mi"><span class="mk tt" data-tt="bb">BB pos</span><span class="mv ${bbPct!=null&&(bbPct<15||bbPct>85)?'warn':''}">${bbPct!=null?bbPct+'%':'—'}</span></div>
+      <div class="mi"><span class="mk tt" data-tt="ma50">MA 50</span><span class="mv">${s.ma50?'$'+fmt(s.ma50):'—'}</span></div>
+      <div class="mi"><span class="mk tt" data-tt="ma200">MA 200</span><span class="mv ${s.ma200&&s.price<s.ma200?'warn':''}">${s.ma200?'$'+fmt(s.ma200):'—'}</span></div>
+      <div class="mi"><span class="mk tt" data-tt="vol_ratio">Vol ratio</span><span class="mv ${s.vol_ratio>=2?'warn':''}">${s.vol_ratio??'—'}×</span></div>
+      <div class="mi"><span class="mk tt" data-tt="w52h">52W High</span><span class="mv">$${fmt(s.week_52_high)}</span></div>
+      <div class="mi"><span class="mk tt" data-tt="w52l">52W Low</span><span class="mv">$${fmt(s.week_52_low)}</span></div>
+      <div class="mi"><span class="mk tt" data-tt="dip30">30d dip</span><span class="mv ${s.dip_30d<=-5?'warn':''}">${sign(s.dip_30d)}${fmt(s.dip_30d)}%</span></div>
+    </div>
+    ${(buyPills||sellPills)?`
+    <div class="signals-wrap">
+      ${buyPills?`<div><div class="sig-lbl">Buy signals</div><div class="sig-row">${buyPills}</div></div>`:''}
+      ${sellPills?`<div><div class="sig-lbl">Sell signals</div><div class="sig-row">${sellPills}</div></div>`:''}
+    </div>`:''}
+    <div class="hint">Click for analyst deep-dive →</div>
+  </div>`;
+}
+
+// ── Filter / Render ──
+function applyFilter(stocks) {
+  if (activeFilter==='buy')   return stocks.filter(s=>s.has_buy);
+  if (activeFilter==='sell')  return stocks.filter(s=>s.has_sell);
+  if (activeFilter==='clean') return stocks.filter(s=>!s.has_buy&&!s.has_sell);
+  return stocks;
+}
+function setFilter(f, el) {
+  activeFilter=f;
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderGrid();
+}
+function renderGrid() {
+  const sorted=[...allStocks].sort((a,b)=>{
+    const sA=(a.has_buy?2:0)+(a.has_sell?1:0),sB=(b.has_buy?2:0)+(b.has_sell?1:0);
+    return sB-sA||a.change_pct-b.change_pct;
+  });
+  const filtered=applyFilter(sorted);
+  document.getElementById('grid').innerHTML = filtered.length
+    ? filtered.map(buildCard).join('')
+    : `<div class="empty"><h3>No stocks match this filter</h3></div>`;
+}
+
+function render(data) {
+  allStocks = data.stocks||[];
+
+  // ── Market pill ──
+  const pill=document.getElementById('mktPill');
+  pill.className='mkt-pill '+(data.market_open?'open':'closed');
+  document.getElementById('mktTxt').textContent=data.market_open?'Market open':'Market closed';
+
+  // ── Stats ──
+  const buyCnt=allStocks.filter(s=>s.has_buy).length;
+  const sellCnt=allStocks.filter(s=>s.has_sell).length;
+  document.getElementById('sTotal').textContent=allStocks.length||'—';
+  document.getElementById('sGain').textContent=allStocks.filter(s=>s.change_pct>=0).length||'—';
+  document.getElementById('sLose').textContent=allStocks.filter(s=>s.change_pct<0).length||'—';
+  document.getElementById('sBuy').textContent=buyCnt||'—';
+  document.getElementById('sSell').textContent=sellCnt||'—';
+
+  // ── Recipients ──
+  if ((data.recipients||[]).length) renderChips(data.recipients);
+
+  // ── Still waiting for first poll ──
+  if (!data.last_poll) {
+    document.getElementById('ts').textContent='Fetching stock data…';
+    document.getElementById('grid').innerHTML=`
+      <div class="empty">
+        <div style="margin-bottom:16px"><span class="spin-teal"></span></div>
+        <h3>Fetching stock data…</h3>
+        <p>The initial poll is running. This usually takes 15–30 seconds.</p>
+      </div>`;
+    return;
+  }
+
+  // ── Normal render ──
+  document.getElementById('ts').textContent=`Last updated: ${data.last_poll}`;
+  renderGrid();
+}
+
+// ── Watchlist ──
+async function addStock() {
+  const inp=document.getElementById('addInput'),sym=inp.value.trim().toUpperCase();
+  const err=document.getElementById('addError'),btn=document.getElementById('addBtn');
+  if (!sym) return;
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
+  err.style.display='none';
+  try {
+    const res=await fetch(`${API}/watchlist`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbol:sym})});
+    const d=await res.json();
+    if (!res.ok){err.textContent=d.error||'Error';err.style.display='inline';}
+    else{inp.value='';await fetchData();}
+  } catch(e){err.textContent='Backend unreachable';err.style.display='inline';}
+  btn.disabled=false; btn.innerHTML='+ Add';
+}
+async function removeStock(sym) {
+  try{await fetch(`${API}/watchlist/${sym}`,{method:'DELETE'});await fetchData();}catch(e){}
+}
+
+// ── Recipients ──
+function renderChips(list) {
+  const w=document.getElementById('emailChips');
+  w.innerHTML=list.length
+    ? list.map(e=>`<div class="chip"><span>${e}</span><button class="chip-x" onclick="removeRecipient('${e}')">✕</button></div>`).join('')
+    : '<span class="no-chips">No recipients yet</span>';
+}
+async function addRecipient() {
+  const inp=document.getElementById('emailInput'),email=inp.value.trim().toLowerCase();
+  const err=document.getElementById('emailError'),btn=document.getElementById('emailBtn');
+  if (!email) return;
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
+  err.style.display='none';
+  try {
+    const res=await fetch(`${API}/recipients`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    const d=await res.json();
+    if (!res.ok){err.textContent=d.error||'Error';err.style.display='inline';}
+    else{inp.value='';renderChips(d.recipients);}
+  } catch(e){err.textContent='Backend unreachable';err.style.display='inline';}
+  btn.disabled=false; btn.innerHTML='+ Add email';
+}
+async function removeRecipient(email) {
+  try{const res=await fetch(`${API}/recipients/${encodeURIComponent(email)}`,{method:'DELETE'});const d=await res.json();if(res.ok)renderChips(d.recipients);}catch(e){}
+}
+
+// ── Manual poll ──
+async function manualPoll() {
+  const btn=document.getElementById('pollBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Polling…';
+  try{await fetch(`${API}/poll`);await new Promise(r=>setTimeout(r,2000));await fetchData();}catch(e){}
+  btn.disabled=false; btn.innerHTML='↻ Refresh';
+}
+
+// ── Fetch ──
+async function fetchData() {
+  try {
+    const res = await fetch(`${API}/stocks`);
+    if (!res.ok) return;
+    const d = await res.json();
+    render(d);
+  } catch(e) {
+    // server not up yet — grid keeps showing "Connecting…"
+  }
+}
+
+// ── DETAIL MODAL ──
+function recPillClass(key) {
+  const k=(key||'').toLowerCase().replace(/[_\s]/g,'-');
+  if (k.includes('strong-buy')) return 'rec-strong-buy';
+  if (k.includes('buy'))        return 'rec-buy';
+  if (k.includes('hold'))       return 'rec-hold';
+  if (k.includes('underperform')||k.includes('sell')) return k.includes('strong')||k.includes('under') ? 'rec-underperform' : 'rec-sell';
+  return 'rec-hold';
+}
+function recLabel(key) {
+  const map={'strong_buy':'Strong Buy','buy':'Buy','hold':'Hold','sell':'Sell','underperform':'Underperform','strong_sell':'Strong Sell'};
+  return map[key]||key||'—';
+}
+function actionClass(action) {
+  const a=(action||'').toLowerCase();
+  if (a==='upgrade') return 'grade-up';
+  if (a==='downgrade') return 'grade-down';
+  if (a==='init'||a==='initiated') return 'grade-init';
+  return 'grade-maint';
+}
+function surpriseClass(pct) {
+  if (!pct) return 'inline';
+  return pct>0?'beat':'miss';
+}
+function fmtLargeNum(n) {
+  if (!n) return '—';
+  if (Math.abs(n)>=1e12) return '$'+(n/1e12).toFixed(2)+'T';
+  if (Math.abs(n)>=1e9)  return '$'+(n/1e9).toFixed(2)+'B';
+  if (Math.abs(n)>=1e6)  return '$'+(n/1e6).toFixed(2)+'M';
+  return '$'+n.toLocaleString();
+}
+
+async function openDetail(symbol) {
+  const overlay=document.getElementById('overlay');
+  const loading=document.getElementById('modalLoading');
+  const content=document.getElementById('modalContent');
+  overlay.style.display='flex';
+  loading.style.display='flex';
+  content.style.display='none';
+  document.body.style.overflow='hidden';
+
+  try {
+    const res=await fetch(`${API}/detail/${symbol}`);
+    const d=await res.json();
+    if (d.error) throw new Error(d.error);
+    window._lastDetailData = d;
+    renderModal(d, symbol);
+  } catch(e) {
+    content.innerHTML=`<div class="modal-loading" style="color:var(--red)">⚠ ${e.message||'Failed to load'}</div>`;
+    loading.style.display='none';
+    content.style.display='block';
+  }
+}
+
+function renderModal(d, symbol) {
+  const loading=document.getElementById('modalLoading');
+  const content=document.getElementById('modalContent');
+
+  const stock    = allStocks.find(s=>s.symbol===symbol)||{};
+  const co       = d.company||{};
+  const an       = d.analyst||{};
+  const fu       = d.fundamentals||{};
+  const up       = (stock.change_pct||0)>=0;
+  const isEquity = d.is_equity !== false;
+  const qtype    = (d.quote_type||'').toUpperCase();
+  const isETF    = qtype==='ETF'||qtype==='MUTUALFUND';
+
+  // ── Type badge ──
+  const typeBadge = !isEquity
+    ? `<span class="badge" style="color:var(--purple);border-color:rgba(155,141,255,.4)">${qtype||'FUND'}</span>`
+    : '';
+
+  // ── Price target bar (equity only) ──
+  let targetBar='<em style="color:var(--muted2);font-size:12px">No analyst target data</em>';
+  if (an.target_low!=null && an.target_high!=null && stock.price) {
+    const lo=Math.min(an.target_low, stock.price*0.8);
+    const hi=Math.max(an.target_high, stock.price*1.2);
+    const range=hi-lo;
+    const curPct =Math.max(0,Math.min(100,((stock.price   -lo)/range)*100));
+    const lowPct =Math.max(0,Math.min(100,((an.target_low -lo)/range)*100));
+    const highPct=Math.max(0,Math.min(100,((an.target_high-lo)/range)*100));
+    targetBar=`
+    <div class="target-bar-wrap">
+      <div class="target-bar-track">
+        <div class="target-bar-range" style="left:${lowPct}%;width:${highPct-lowPct}%"></div>
+        <div class="target-bar-cur" style="left:${curPct}%"></div>
+      </div>
+      <div class="target-labels">
+        <span>Low $${fmt(an.target_low)}</span>
+        <span style="color:var(--text)">Current $${fmt(stock.price)}</span>
+        <span>High $${fmt(an.target_high)}</span>
+      </div>
+    </div>`;
+  }
+
+  // ── Analyst section (only render for equities with data) ──
+  const hasAnalystData = an.rec_key || an.target_mean || an.num_analysts;
+  const analystSection = isEquity && hasAnalystData ? `
+    <div>
+      <div class="sec-hdr">Analyst Consensus</div>
+      <div class="consensus-grid">
+        <div class="con-card">
+          <div class="con-lbl">Recommendation</div>
+          <div style="margin-top:4px"><span class="rec-pill ${recPillClass(an.rec_key)}">${recLabel(an.rec_key)||'—'}</span></div>
+          <div class="con-sub">${an.num_analysts?an.num_analysts+' analysts':''} ${an.rec_mean?'· score '+fmt(an.rec_mean,1):''}</div>
+        </div>
+        <div class="con-card">
+          <div class="con-lbl">Mean target</div>
+          <div class="con-val ${an.upside_pct>0?'g':an.upside_pct<0?'r':''}">${an.target_mean?'$'+fmt(an.target_mean):'—'}</div>
+          <div class="con-sub">${an.upside_pct!=null?(an.upside_pct>0?'↑ +':'↓ ')+fmt(an.upside_pct,1)+'% upside':''}</div>
+        </div>
+        <div class="con-card">
+          <div class="con-lbl">Bull target</div>
+          <div class="con-val g">${an.target_high?'$'+fmt(an.target_high):'—'}</div>
+          <div class="con-sub">Highest analyst</div>
+        </div>
+        <div class="con-card">
+          <div class="con-lbl">Bear target</div>
+          <div class="con-val r">${an.target_low?'$'+fmt(an.target_low):'—'}</div>
+          <div class="con-sub">Lowest analyst</div>
+        </div>
+      </div>
+      <div style="margin-top:16px">${targetBar}</div>
+    </div>` : !isEquity ? `
+    <div>
+      <div class="sec-hdr">${isETF?'ETF / Fund Info':'Instrument Info'}</div>
+      <div class="consensus-grid">
+        ${co.fund_family?`<div class="con-card"><div class="con-lbl">Fund family</div><div class="con-val" style="font-size:14px">${co.fund_family}</div></div>`:''}
+        ${co.category?`<div class="con-card"><div class="con-lbl">Category</div><div class="con-val" style="font-size:14px">${co.category}</div></div>`:''}
+        ${co.total_assets!=null?`<div class="con-card"><div class="con-lbl">Total assets</div><div class="con-val b">$${fmt(co.total_assets)}B</div></div>`:''}
+        ${co.nav!=null?`<div class="con-card"><div class="con-lbl">NAV</div><div class="con-val">$${fmt(co.nav)}</div></div>`:''}
+        ${co.expense_ratio!=null?`<div class="con-card"><div class="con-lbl">Expense ratio</div><div class="con-val">${(co.expense_ratio*100).toFixed(2)}%</div></div>`:''}
+        ${co.ytd_return!=null?`<div class="con-card"><div class="con-lbl">YTD return</div><div class="con-val ${co.ytd_return>=0?'g':'r'}">${(co.ytd_return*100).toFixed(1)}%</div></div>`:''}
+        ${co.three_yr!=null?`<div class="con-card"><div class="con-lbl">3Y avg return</div><div class="con-val ${co.three_yr>=0?'g':'r'}">${(co.three_yr*100).toFixed(1)}%</div></div>`:''}
+        ${co.five_yr!=null?`<div class="con-card"><div class="con-lbl">5Y avg return</div><div class="con-val ${co.five_yr>=0?'g':'r'}">${(co.five_yr*100).toFixed(1)}%</div></div>`:''}
+        ${fu.beta!=null?`<div class="con-card"><div class="con-lbl">Beta</div><div class="con-val">${fmt(fu.beta)}</div></div>`:''}
+        ${fu.dividend_yield!=null?`<div class="con-card"><div class="con-lbl">Dividend yield</div><div class="con-val g">${fmtPct(fu.dividend_yield)}</div></div>`:''}
+      </div>
+      <p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:12px">
+        ${isETF?'ETFs and funds do not have individual analyst ratings or earnings data.':'This instrument type does not have equity fundamentals.'}
+      </p>
+    </div>` : `
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);padding:8px 0">
+      No analyst data available for this security.
+    </div>`;
+
+  // ── Upgrades rows ──
+  const upgradeRows=(d.upgrades||[]).length
+    ? (d.upgrades||[]).map(u=>`
+      <tr>
+        <td style="color:var(--muted2)">${u.date||'—'}</td>
+        <td style="font-weight:600">${u.firm||'—'}</td>
+        <td class="${actionClass(u.action)}" style="font-weight:600;text-transform:capitalize">${u.action||'—'}</td>
+        <td>${u.from||'—'}</td>
+        <td style="font-weight:600;color:var(--text)">${u.to||'—'}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="5" style="color:var(--muted);font-family:'DM Mono',monospace;font-size:11px">${isEquity?'No recent upgrades/downgrades':'Not applicable for this instrument type'}</td></tr>`;
+
+  // ── Earnings rows ──
+  const earningsRows=(d.earnings||[]).length
+    ? [...d.earnings].reverse().map(e=>{
+        const beat=e.surprise_pct>0,miss=e.surprise_pct<0;
+        return `<tr>
+          <td>${e.date||'—'}</td>
+          <td>$${fmt(e.eps_estimate)}</td>
+          <td style="font-weight:600">$${fmt(e.eps_actual)}</td>
+          <td class="${beat?'beat':miss?'miss':'inline'}">${e.surprise_pct!=null?(beat?'+':'')+fmt(e.surprise_pct,1)+'%':'—'}</td>
+        </tr>`;}).join('')
+    : `<tr><td colspan="4" style="color:var(--muted);font-family:'DM Mono',monospace;font-size:11px">${isEquity?'No earnings history available':'ETFs/funds do not report quarterly EPS'}</td></tr>`;
+
+  // ── Fundamentals — only show fields that actually have data ──
+  const allFundItems=[
+    {lbl:'Market Cap',    tt:'mktcap',   val:fu.market_cap!=null?'$'+fmt(fu.market_cap)+'B':null},
+    {lbl:'Revenue TTM',   tt:'revenue',  val:fu.revenue_ttm!=null?'$'+fmt(fu.revenue_ttm)+'B':null},
+    {lbl:'Free Cash Flow',tt:'fcf',      val:fu.free_cashflow!=null?'$'+fmt(fu.free_cashflow)+'B':null},
+    {lbl:'P/E (trailing)',tt:'pe',        val:fu.pe_ratio!=null?fmt(fu.pe_ratio):null},
+    {lbl:'P/E (forward)', tt:'fwd_pe',   val:fu.forward_pe!=null?fmt(fu.forward_pe):null},
+    {lbl:'PEG Ratio',     tt:'peg',      val:fu.peg_ratio!=null?fmt(fu.peg_ratio):null},
+    {lbl:'Price/Book',    tt:'pb',       val:fu.price_to_book!=null?fmt(fu.price_to_book):null},
+    {lbl:'Price/Sales',   tt:'ps',       val:fu.price_to_sales!=null?fmt(fu.price_to_sales):null},
+    {lbl:'EV/EBITDA',     tt:'ev_ebitda',val:fu.ev_ebitda!=null?fmt(fu.ev_ebitda):null},
+    {lbl:'EPS (TTM)',     tt:'eps',      val:fu.eps_trailing!=null?'$'+fmt(fu.eps_trailing):null},
+    {lbl:'EPS (Fwd)',     tt:'fwd_eps',  val:fu.eps_forward!=null?'$'+fmt(fu.eps_forward):null},
+    {lbl:'Gross Margin',  tt:'gross_margin', val:fu.gross_margins!=null?fmtPct(fu.gross_margins):null},
+    {lbl:'Op. Margin',    tt:'op_margin',val:fu.operating_margins!=null?fmtPct(fu.operating_margins):null},
+    {lbl:'Profit Margin', tt:'net_margin',val:fu.profit_margin!=null?fmtPct(fu.profit_margin):null},
+    {lbl:'ROE',           tt:'roe',      val:fu.roe!=null?fmtPct(fu.roe):null},
+    {lbl:'ROA',           tt:'roa',      val:fu.roa!=null?fmtPct(fu.roa):null},
+    {lbl:'Rev Growth',    tt:'rev_growth',val:fu.revenue_growth!=null?fmtPct(fu.revenue_growth):null},
+    {lbl:'Earn. Growth',  tt:'earn_growth',val:fu.earnings_growth!=null?fmtPct(fu.earnings_growth):null},
+    {lbl:'Debt/Equity',   tt:'de',       val:fu.debt_to_equity!=null?fmt(fu.debt_to_equity):null},
+    {lbl:'Beta',          tt:'beta',     val:fu.beta!=null?fmt(fu.beta):null},
+    {lbl:'Dividend Yield',tt:'div_yield',val:fu.dividend_yield!=null?fmtPct(fu.dividend_yield):null},
+    {lbl:'Short %Float',  tt:'short_pct',val:fu.shares_short_pct!=null?fmtPct(fu.shares_short_pct):null},
+  ];
+  const availFunds=allFundItems.filter(f=>f.val!=null);
+  const funds = availFunds.length
+    ? availFunds.map(f=>`<div class="fund-item"><div class="fund-lbl tt" data-tt="${f.tt}">${f.lbl}</div><div class="fund-val">${f.val}</div></div>`).join('')
+    : `<p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">No fundamental data available for this instrument.</p>`;
+
+  content.innerHTML = `
+  <div class="modal-header">
+    <div class="modal-title">
+      <div class="modal-sym">${symbol}</div>
+      <div class="modal-name">${co.name||symbol}</div>
+      <div class="modal-sector">
+        ${typeBadge}
+        ${co.sector?`<span class="badge">${co.sector}</span>`:''}
+        ${co.industry?`<span class="badge">${co.industry}</span>`:''}
+        ${co.fund_family&&!co.sector?`<span class="badge">${co.fund_family}</span>`:''}
+        ${co.category?`<span class="badge">${co.category}</span>`:''}
+        ${co.exchange?`<span class="badge">${co.exchange}</span>`:''}
+        ${co.country?`<span class="badge">${co.country}</span>`:''}
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <button class="btn" style="font-size:12px;padding:7px 14px;display:flex;align-items:center;gap:6px;background:rgba(31,214,124,.1);border-color:rgba(31,214,124,.3);color:var(--green)" onclick="downloadReport('${symbol}')">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="flex-shrink:0"><path d="M6.5 1v7M3.5 5.5l3 3 3-3M1.5 10.5h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Download Report
+      </button>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+  </div>
+
+  <div class="modal-price-bar">
+    <span class="modal-price">$${fmt(stock.price)}</span>
+    <span class="chg ${up?'pos':'neg'}" style="font-size:14px">${sign(stock.change_pct)}${fmt(stock.change_pct)}%</span>
+    ${d.next_earnings?`<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--amber)">📅 Next earnings: ${d.next_earnings}</span>`:''}
+    ${co.employees?`<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted2)">${co.employees.toLocaleString()} employees</span>`:''}
+  </div>
+
+  <div class="modal-body">
+
+    ${co.description?`
+    <div>
+      <div class="sec-hdr">About</div>
+      <div class="desc" id="descBox">${co.description}
+        <div class="desc-fade" id="descFade"></div>
+      </div>
+      <button class="read-more" id="readMoreBtn" onclick="expandDesc()">Read more ↓</button>
+    </div>`:''}
+
+    ${analystSection}
+
+    <div>
+      <div class="sec-hdr">Recent Upgrades & Downgrades</div>
+      <div style="overflow-x:auto">
+        <table class="upgrade-table">
+          <thead><tr><th>Date</th><th>Firm</th><th>Action</th><th>From</th><th>To</th></tr></thead>
+          <tbody>${upgradeRows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-hdr">Earnings History (EPS)</div>
+      <div style="overflow-x:auto">
+        <table class="earnings-table">
+          <thead><tr><th>Quarter</th><th>Estimate</th><th>Actual</th><th>Surprise</th></tr></thead>
+          <tbody>${earningsRows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-hdr">Fundamentals</div>
+      <div class="fund-grid">${funds}</div>
+    </div>
+
+    <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:right">
+      Data via Yahoo Finance · ${d.fetched_at||''} · Not financial advice
+    </div>
+  </div>`;
+
+  loading.style.display='none';
+  content.style.display='block';
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('overlay')) return;
+  document.getElementById('overlay').style.display='none';
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+function expandDesc() {
+  document.getElementById('descBox').classList.add('expanded');
+  document.getElementById('descFade').style.display='none';
+  document.getElementById('readMoreBtn').style.display='none';
+}
+
+// ── Clock ──
+const clock=document.getElementById('clock');
+setInterval(()=>{clock.textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});},1000);
+clock.textContent=new Date().toLocaleTimeString();
+
+// ── TOOLTIP GLOSSARY ──
+const GLOSSARY = {
+  rsi: {
+    term: 'RSI 14 — Relative Strength Index',
+    def:  'Measures the speed and magnitude of recent price changes on a 0–100 scale. Calculated over the last 14 trading days.',
+    signal: '< 35 = Oversold (buy signal) · > 70 = Overbought (sell signal) · 45–55 = Neutral'
+  },
+  macd: {
+    term: 'MACD — Moving Avg Convergence/Divergence',
+    def:  'The difference between the 12-day EMA and 26-day EMA. The histogram shows MACD minus its 9-day signal line.',
+    signal: 'Histogram crosses 0 from below = Bullish · Crosses from above = Bearish'
+  },
+  bb: {
+    term: 'BB Position — Bollinger Band %',
+    def:  'Where the current price sits within the Bollinger Bands (20-day MA ± 2 standard deviations). 0% = lower band, 100% = upper band.',
+    signal: '< 15% = Near lower band (buy signal) · > 85% = Near upper band (sell signal)'
+  },
+  ma50: {
+    term: 'MA 50 — 50-Day Moving Average',
+    def:  'The average closing price over the last 50 trading days. A widely-watched short-to-medium term trend indicator.',
+    signal: 'Price above MA50 = short-term uptrend · Price below = short-term downtrend'
+  },
+  ma200: {
+    term: 'MA 200 — 200-Day Moving Average',
+    def:  'The average closing price over the last 200 trading days. The most-watched long-term trend indicator used by institutions.',
+    signal: 'Price above MA200 = long-term uptrend · Price below = long-term downtrend (bear territory)'
+  },
+  vol_ratio: {
+    term: 'Volume Ratio',
+    def:  "Today's trading volume divided by the 20-day average volume. Shows whether today's activity is unusual.",
+    signal: '> 2× on a down day = heavy selling (possible capitulation buy) · > 2× on a big up day = possible distribution (sell signal)'
+  },
+  w52h: {
+    term: '52-Week High',
+    def:  'The highest price the stock has traded at over the past 52 weeks (one year).',
+    signal: 'Price within 3% of this level may trigger a sell signal — approaching resistance'
+  },
+  w52l: {
+    term: '52-Week Low',
+    def:  'The lowest price the stock has traded at over the past 52 weeks (one year).',
+    signal: 'Price within 5% of this level may trigger a buy signal — potential value zone'
+  },
+  dip30: {
+    term: '30-Day Dip',
+    def:  "How far the current price has fallen from the highest point in the last 30 trading days. Negative = below recent peak.",
+    signal: '≤ −5% = Potential dip buying opportunity'
+  },
+  // Fundamentals
+  mktcap: {
+    term: 'Market Capitalisation',
+    def:  'Total market value of all outstanding shares. Price × Shares outstanding. Shown in billions ($B).',
+    signal: 'Large cap > $10B · Mid cap $2–10B · Small cap < $2B'
+  },
+  pe: {
+    term: 'P/E Ratio — Price to Earnings (Trailing)',
+    def:  'Stock price divided by earnings per share over the last 12 months. Tells you how much you\'re paying per $1 of profit.',
+    signal: 'Lower P/E = cheaper relative to earnings. Compare to sector peers and historical average.'
+  },
+  fwd_pe: {
+    term: 'Forward P/E',
+    def:  'Stock price divided by next 12 months\' estimated earnings. More forward-looking than trailing P/E.',
+    signal: 'Forward P/E < trailing P/E = earnings expected to grow'
+  },
+  peg: {
+    term: 'PEG Ratio — Price/Earnings to Growth',
+    def:  'P/E ratio divided by the earnings growth rate. Adjusts valuation for growth speed.',
+    signal: '< 1 = potentially undervalued for its growth · > 2 = expensive relative to growth'
+  },
+  pb: {
+    term: 'Price / Book',
+    def:  'Stock price divided by book value per share (assets minus liabilities). Shows what you pay vs what the company owns.',
+    signal: '< 1 = trading below book value (potentially undervalued) · Very high = market pricing in strong growth expectations'
+  },
+  ps: {
+    term: 'Price / Sales (TTM)',
+    def:  'Stock price divided by revenue per share over the last 12 months. Useful for companies with no earnings yet.',
+    signal: 'Lower is cheaper. Varies widely by industry — compare within sector.'
+  },
+  ev_ebitda: {
+    term: 'EV / EBITDA',
+    def:  'Enterprise Value divided by Earnings Before Interest, Tax, Depreciation & Amortisation. A capital-structure-neutral valuation multiple.',
+    signal: 'Lower = cheaper. More meaningful than P/E for capital-heavy businesses. < 10 often considered reasonable.'
+  },
+  eps: {
+    term: 'EPS — Earnings Per Share (TTM)',
+    def:  'Net profit divided by shares outstanding, over the trailing twelve months. The most fundamental measure of profitability per share.',
+    signal: 'Positive and growing EPS is a healthy sign. Negative = company is losing money.'
+  },
+  fwd_eps: {
+    term: 'Forward EPS',
+    def:  'Analyst consensus estimate of earnings per share for the next 12 months.',
+    signal: 'Higher than trailing EPS = earnings growth expected'
+  },
+  gross_margin: {
+    term: 'Gross Margin',
+    def:  'Revenue minus cost of goods sold, divided by revenue. Shows profitability before operating expenses.',
+    signal: 'Higher is better. Software/pharma typically > 60%. Retail/hardware typically < 40%.'
+  },
+  op_margin: {
+    term: 'Operating Margin',
+    def:  'Operating income divided by revenue. Measures efficiency after paying operating costs but before interest and taxes.',
+    signal: 'Consistently > 15% = strong operational efficiency'
+  },
+  net_margin: {
+    term: 'Net Profit Margin',
+    def:  'Net income divided by revenue. The bottom-line profitability after all costs, taxes, and interest.',
+    signal: 'Higher is better. Anything above 10% is generally solid.'
+  },
+  roe: {
+    term: 'ROE — Return on Equity',
+    def:  'Net income divided by shareholders\' equity. Measures how efficiently management uses equity capital to generate profit.',
+    signal: '> 15% = strong capital efficiency · Warren Buffett looks for > 20% consistently'
+  },
+  roa: {
+    term: 'ROA — Return on Assets',
+    def:  'Net income divided by total assets. Shows how efficiently the company uses its assets to generate earnings.',
+    signal: '> 5% is generally considered good. > 10% is excellent.'
+  },
+  rev_growth: {
+    term: 'Revenue Growth (YoY)',
+    def:  'Year-over-year percentage change in total revenue. A key indicator of business expansion.',
+    signal: '> 10% = healthy growth for established companies · > 20% = high-growth phase'
+  },
+  earn_growth: {
+    term: 'Earnings Growth (YoY)',
+    def:  'Year-over-year percentage change in earnings. Ideally should outpace revenue growth, signalling efficiency improvements.',
+    signal: 'Positive and accelerating = strong momentum. Declining = potential red flag.'
+  },
+  de: {
+    term: 'Debt / Equity',
+    def:  'Total debt divided by shareholders\' equity. Measures financial leverage and how much the company relies on borrowing.',
+    signal: '< 1 = conservative · 1–2 = moderate · > 2 = highly leveraged (higher risk)'
+  },
+  beta: {
+    term: 'Beta',
+    def:  'Measures how much the stock moves relative to the overall market (S&P 500). Calculated over 5 years monthly.',
+    signal: 'β = 1 = moves with market · β > 1 = more volatile · β < 1 = less volatile · β < 0 = moves inversely (e.g. gold)'
+  },
+  div_yield: {
+    term: 'Dividend Yield',
+    def:  'Annual dividends per share divided by the current stock price. Income returned to shareholders as a percentage.',
+    signal: '2–4% = moderate income · > 5% = high yield (check sustainability) · 0% = growth company reinvesting profits'
+  },
+  short_pct: {
+    term: 'Short % of Float',
+    def:  'Percentage of shares available for trading that are currently sold short. High short interest means many investors are betting the price will fall.',
+    signal: '> 10% = elevated short interest, possible short squeeze risk or bearish sentiment · > 20% = heavily shorted'
+  },
+  revenue: {
+    term: 'Revenue TTM',
+    def:  'Total revenue (sales) generated over the trailing twelve months. The top-line figure before any costs are deducted.',
+    signal: 'Track growth quarter-over-quarter and year-over-year for momentum.'
+  },
+  fcf: {
+    term: 'Free Cash Flow',
+    def:  'Operating cash flow minus capital expenditures. The actual cash the business generates after maintaining/growing its asset base.',
+    signal: 'Positive and growing FCF = financial strength. Many value investors consider FCF the truest measure of profitability.'
+  },
+};
+
+// ── Tooltip engine ──
+const ttEl   = document.getElementById('tooltip');
+const ttTerm = document.getElementById('tt-term');
+const ttDef  = document.getElementById('tt-def');
+const ttSig  = document.getElementById('tt-signal');
+let ttTimeout;
+
+function showTip(el, key) {
+  const g = GLOSSARY[key];
+  if (!g) return;
+  ttTerm.textContent = g.term;
+  ttDef.textContent  = g.def;
+  ttSig.textContent  = g.signal || '';
+  ttSig.style.display = g.signal ? 'block' : 'none';
+
+  const rect = el.getBoundingClientRect();
+  const tipW = 260, tipH = ttEl.offsetHeight || 120;
+  let left = rect.left + rect.width / 2 - tipW / 2;
+  let top  = rect.top - tipH - 10 + window.scrollY;
+
+  // Clamp horizontally
+  left = Math.max(8, Math.min(left, window.innerWidth - tipW - 8));
+  // Flip below if not enough space above
+  if (rect.top < tipH + 20) top = rect.bottom + 8 + window.scrollY;
+
+  ttEl.style.left   = left + 'px';
+  ttEl.style.top    = top + 'px';
+  ttEl.style.width  = tipW + 'px';
+  clearTimeout(ttTimeout);
+  ttEl.classList.add('visible');
+}
+
+function hideTip() {
+  ttTimeout = setTimeout(() => ttEl.classList.remove('visible'), 120);
+}
+
+// Delegate to all .tt elements (works for dynamically rendered cards + modal)
+document.addEventListener('mouseover', e => {
+  const el = e.target.closest('.tt');
+  if (el && el.dataset.tt) showTip(el, el.dataset.tt);
+});
+document.addEventListener('mouseout', e => {
+  if (e.target.closest('.tt')) hideTip();
+});
+
+// ── DOWNLOAD REPORT ──
+function downloadReport(symbol) {
+  const d     = window._lastDetailData;
+  const stock = allStocks.find(s => s.symbol === symbol) || {};
+  if (!d) return;
+
+  const co = d.company      || {};
+  const an = d.analyst      || {};
+  const fu = d.fundamentals || {};
+  const now = new Date().toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' });
+
+  const pct = v => v != null ? (v * 100).toFixed(1) + '%' : 'N/A';
+  const usd = (v, d=2) => v != null ? '$' + (+v).toFixed(d) : 'N/A';
+  const num = (v, d=2) => v != null ? (+v).toFixed(d) : 'N/A';
+  const sign = v => v != null ? (v >= 0 ? '+' : '') + (+v).toFixed(2) + '%' : 'N/A';
+
+  // ── Price target bar text ──
+  let targetSummary = 'No analyst target data available.';
+  if (an.target_mean && stock.price) {
+    targetSummary = `Mean: ${usd(an.target_mean)} | Low: ${usd(an.target_low)} | High: ${usd(an.target_high)} | Upside: ${an.upside_pct != null ? (an.upside_pct > 0 ? '+' : '') + an.upside_pct + '%' : 'N/A'}`;
+  }
+
+  // ── Upgrades/downgrades table ──
+  const upgradesSection = (d.upgrades || []).length
+    ? '| Date | Firm | Action | From | To |\n|------|------|--------|------|----|\n' +
+      d.upgrades.map(u => `| ${u.date||'—'} | ${u.firm||'—'} | ${u.action||'—'} | ${u.from||'—'} | ${u.to||'—'} |`).join('\n')
+    : '_No recent upgrades or downgrades available._';
+
+  // ── Earnings table ──
+  const earningsSection = (d.earnings || []).length
+    ? '| Quarter | EPS Estimate | EPS Actual | Surprise |\n|---------|-------------|------------|----------|\n' +
+      [...d.earnings].reverse().map(e =>
+        `| ${e.date||'—'} | ${e.eps_estimate != null ? '$'+e.eps_estimate : '—'} | ${e.eps_actual != null ? '$'+e.eps_actual : '—'} | ${e.surprise_pct != null ? (e.surprise_pct > 0 ? '+' : '') + e.surprise_pct + '%' : '—'} |`
+      ).join('\n')
+    : '_No earnings history available (ETF/fund or data unavailable)._';
+
+  // ── Technical signals ──
+  const buySignals  = (stock.buy_signals  || []).length ? stock.buy_signals.map(s  => `- 🟢 ${s}`).join('\n')  : '- None currently active';
+  const sellSignals = (stock.sell_signals || []).length ? stock.sell_signals.map(s => `- 🔴 ${s}`).join('\n') : '- None currently active';
+
+  // ── Fundamentals section ──
+  const fundRows = [
+    ['Market Cap',        fu.market_cap       != null ? usd(fu.market_cap) + 'B'   : 'N/A'],
+    ['Revenue (TTM)',     fu.revenue_ttm      != null ? usd(fu.revenue_ttm) + 'B'  : 'N/A'],
+    ['Free Cash Flow',   fu.free_cashflow    != null ? usd(fu.free_cashflow) + 'B' : 'N/A'],
+    ['P/E (Trailing)',   num(fu.pe_ratio)],
+    ['P/E (Forward)',    num(fu.forward_pe)],
+    ['PEG Ratio',        num(fu.peg_ratio)],
+    ['Price / Book',     num(fu.price_to_book)],
+    ['Price / Sales',    num(fu.price_to_sales)],
+    ['EV / EBITDA',      num(fu.ev_ebitda)],
+    ['EPS (TTM)',        fu.eps_trailing     != null ? usd(fu.eps_trailing)  : 'N/A'],
+    ['EPS (Forward)',    fu.eps_forward      != null ? usd(fu.eps_forward)   : 'N/A'],
+    ['Gross Margin',     pct(fu.gross_margins)],
+    ['Operating Margin', pct(fu.operating_margins)],
+    ['Net Profit Margin',pct(fu.profit_margin)],
+    ['ROE',              pct(fu.roe)],
+    ['ROA',              pct(fu.roa)],
+    ['Revenue Growth',   pct(fu.revenue_growth)],
+    ['Earnings Growth',  pct(fu.earnings_growth)],
+    ['Debt / Equity',    num(fu.debt_to_equity)],
+    ['Beta',             num(fu.beta)],
+    ['Dividend Yield',   pct(fu.dividend_yield)],
+    ['Short % of Float', pct(fu.shares_short_pct)],
+  ].filter(r => r[1] !== 'N/A' && r[1] !== 'null' && r[1] !== null);
+
+  const fundTable = fundRows.length
+    ? '| Metric | Value |\n|--------|-------|\n' + fundRows.map(r => `| ${r[0]} | ${r[1]} |`).join('\n')
+    : '_No fundamental data available for this instrument type._';
+
+  // ── ETF section ──
+  const etfSection = !d.is_equity ? `
+## ETF / Fund Details
+
+| Field | Value |
+|-------|-------|
+| Fund Family | ${co.fund_family || 'N/A'} |
+| Category | ${co.category || 'N/A'} |
+| Total Assets | ${co.total_assets != null ? usd(co.total_assets) + 'B' : 'N/A'} |
+| NAV | ${co.nav != null ? usd(co.nav) : 'N/A'} |
+| Expense Ratio | ${co.expense_ratio != null ? (co.expense_ratio * 100).toFixed(2) + '%' : 'N/A'} |
+| YTD Return | ${co.ytd_return != null ? pct(co.ytd_return) : 'N/A'} |
+| 3-Year Avg Return | ${co.three_yr != null ? pct(co.three_yr) : 'N/A'} |
+| 5-Year Avg Return | ${co.five_yr != null ? pct(co.five_yr) : 'N/A'} |
+` : '';
+
+  // ── Assemble full report ──
+  const report = `# ${symbol} — Investment Research Report
+**Generated:** ${now}
+**Data source:** Yahoo Finance via Market Pulse
+
+---
+
+## How to use this report with Claude
+
+Upload this file to Claude and try prompts like:
+- *"Summarise the investment case for ${symbol} based on this report"*
+- *"Is ${symbol} overvalued or undervalued based on these fundamentals?"*
+- *"What are the biggest risks for ${symbol} given this data?"*
+- *"Compare ${symbol}'s margins and growth to typical ${co.sector || 'sector'} benchmarks"*
+- *"Explain what the analyst upgrades/downgrades suggest about sentiment"*
+- *"What does the earnings beat/miss history tell me about management guidance?"*
+- *"Given the RSI and MACD signals, what does the technical picture look like?"*
+
+---
+
+## Company Overview
+
+| Field | Value |
+|-------|-------|
+| Name | ${co.name || symbol} |
+| Ticker | ${symbol} |
+| Instrument Type | ${d.quote_type || 'Equity'} |
+| Sector | ${co.sector || 'N/A'} |
+| Industry | ${co.industry || 'N/A'} |
+| Exchange | ${co.exchange || 'N/A'} |
+| Country | ${co.country || 'N/A'} |
+| Employees | ${co.employees ? co.employees.toLocaleString() : 'N/A'} |
+| Website | ${co.website || 'N/A'} |
+${d.next_earnings ? `| Next Earnings Date | ${d.next_earnings} |` : ''}
+
+${co.description ? `### Business Description\n\n${co.description}` : ''}
+
+---
+
+## Current Price & Technical Snapshot
+
+| Metric | Value |
+|--------|-------|
+| Current Price | ${usd(stock.price)} |
+| Day Change | ${sign(stock.change_pct)} (${stock.change != null ? (stock.change >= 0 ? '+' : '') + '$' + Math.abs(stock.change).toFixed(2) : 'N/A'}) |
+| Today's Open | ${usd(stock.open)} |
+| Previous Close | ${usd(stock.prev_close)} |
+| 52-Week High | ${usd(stock.week_52_high)} |
+| 52-Week Low | ${usd(stock.week_52_low)} |
+| 30-Day Dip | ${stock.dip_30d != null ? (stock.dip_30d > 0 ? '+' : '') + stock.dip_30d.toFixed(2) + '%' : 'N/A'} |
+| RSI (14-day) | ${stock.rsi != null ? stock.rsi : 'N/A'} |
+| MACD Histogram | ${stock.macd_hist != null ? stock.macd_hist : 'N/A'} |
+| MA 50 | ${stock.ma50 != null ? usd(stock.ma50) : 'N/A'} |
+| MA 200 | ${stock.ma200 != null ? usd(stock.ma200) : 'N/A'} |
+| Bollinger Band Upper | ${stock.bb_upper != null ? usd(stock.bb_upper) : 'N/A'} |
+| Bollinger Band Lower | ${stock.bb_lower != null ? usd(stock.bb_lower) : 'N/A'} |
+| Volume | ${stock.volume != null ? stock.volume.toLocaleString() : 'N/A'} |
+| Avg Volume (20d) | ${stock.avg_volume != null ? stock.avg_volume.toLocaleString() : 'N/A'} |
+| Volume Ratio | ${stock.vol_ratio != null ? stock.vol_ratio + 'x' : 'N/A'} |
+
+### Active Buy Signals
+${buySignals}
+
+### Active Sell Signals
+${sellSignals}
+
+---
+
+## Analyst Consensus
+${d.is_equity === false ? '_Analyst ratings are not available for ETFs and funds._' : `
+| Metric | Value |
+|--------|-------|
+| Recommendation | ${an.rec_key ? an.rec_key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'N/A'} |
+| Recommendation Score | ${an.rec_mean != null ? an.rec_mean + ' / 5.0 (1=Strong Buy, 5=Sell)' : 'N/A'} |
+| Number of Analysts | ${an.num_analysts || 'N/A'} |
+| Mean Price Target | ${an.target_mean != null ? usd(an.target_mean) : 'N/A'} |
+| Median Price Target | ${an.target_median != null ? usd(an.target_median) : 'N/A'} |
+| High Price Target | ${an.target_high != null ? usd(an.target_high) : 'N/A'} |
+| Low Price Target | ${an.target_low != null ? usd(an.target_low) : 'N/A'} |
+| Implied Upside (Mean) | ${an.upside_pct != null ? (an.upside_pct > 0 ? '+' : '') + an.upside_pct + '%' : 'N/A'} |
+
+**Price Target Range:** ${targetSummary}
+`}
+
+---
+
+## Recent Analyst Upgrades & Downgrades
+
+${upgradesSection}
+
+---
+
+## Earnings History (EPS)
+
+${earningsSection}
+
+---
+${etfSection}
+## Fundamental Metrics
+
+${fundTable}
+
+---
+
+## Glossary of Key Terms
+
+**RSI (Relative Strength Index):** Momentum oscillator 0–100. Below 35 = oversold (potential buy). Above 70 = overbought (potential sell).
+
+**MACD (Moving Avg Convergence/Divergence):** Trend-following indicator. Histogram crossing above zero = bullish. Below zero = bearish.
+
+**Bollinger Bands:** Price channels set at 2 standard deviations from the 20-day MA. Price at lower band = potential buy. At upper band = potential sell.
+
+**P/E Ratio:** Price per share divided by earnings per share. Lower generally means cheaper relative to earnings.
+
+**PEG Ratio:** P/E divided by earnings growth rate. Below 1 = potentially undervalued for its growth rate.
+
+**EV/EBITDA:** Enterprise Value divided by EBITDA. Capital-structure-neutral valuation. Below 10 is often considered reasonable.
+
+**ROE (Return on Equity):** Net income / shareholders' equity. Above 15% is generally strong.
+
+**Beta:** Volatility vs the market. 1.0 = moves with market. Above 1 = more volatile. Below 1 = more stable.
+
+**Short % of Float:** Percentage of tradeable shares currently sold short. Above 10% = elevated bearish sentiment or short-squeeze risk.
+
+**Free Cash Flow:** Cash generated after capital expenditures. Often considered the truest measure of profitability.
+
+---
+
+_Report generated by Market Pulse · Data from Yahoo Finance · ${now} · Not financial advice._
+`;
+
+  // Trigger download
+  const blob = new Blob([report], { type: 'text/markdown;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `${symbol}_report_${new Date().toISOString().slice(0,10)}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Boot ──
+fetchData();
+
+// Poll every 3s until last_poll is set, then slow to every 30s
+const _bootTimer = setInterval(async () => {
+  await fetchData();
+  const ts = document.getElementById('ts').textContent;
+  if (ts.startsWith('Last updated')) {
+    clearInterval(_bootTimer);
+    setInterval(fetchData, 30000);
+  }
+}, 3000);
+
+fetch(`${API}/recipients`).then(r=>r.json()).then(d=>renderChips(d.recipients||[])).catch(()=>{});
+</script>
+</body>
+</html>
